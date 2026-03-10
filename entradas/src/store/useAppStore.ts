@@ -31,6 +31,8 @@ export interface NotaFiscal {
   itens?: ItemNf[];
   valorTotal?: number;
   totalItens?: number;
+    supabaseId?: string;
+  fornecedorId?: string;
 }
 
 export interface ItemNf {
