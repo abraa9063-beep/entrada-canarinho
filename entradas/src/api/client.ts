@@ -298,11 +298,25 @@ async createNotaFiscal(data: any) {
   },
   
   async deleteNotaFiscal(id: number) {
-    const res = await client.api.fetch(`/api/notas-fiscais/${id}`, {
-      method: "DELETE",
-    });
-    return res.json();
-  },
+  const { data: notas, error: listError } = await supabase
+    .from('notas_fiscais')
+    .select('id')
+    .order('created_at', { ascending: false });
+
+  if (listError) throw listError;
+
+  const atual = (notas || [])[id - 1];
+  if (!atual) throw new Error('Nota fiscal não encontrada no Supabase.');
+
+  const { error } = await supabase
+    .from('notas_fiscais')
+    .delete()
+    .eq('id', atual.id);
+
+  if (error) throw error;
+
+  return { success: true };
+}
   
   // Itens da Nota
   async getItensNota(notaId: number) {
