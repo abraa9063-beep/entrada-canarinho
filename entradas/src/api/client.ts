@@ -184,7 +184,6 @@ export const api = {
   const nota = notas.find((n) => n.id === id);
 
   return { data: nota || null };
-}
   },
   
   async getNotaFiscal(id: number) {
