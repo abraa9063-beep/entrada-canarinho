@@ -286,7 +286,7 @@ async createNotaFiscal(data: any) {
       fornecedorId: inserted.fornecedor_id
     }
   };
-}
+},
   
   async updateNotaFiscal(id: number, data: any) {
     const res = await client.api.fetch(`/api/notas-fiscais/${id}`, {
@@ -316,7 +316,7 @@ async createNotaFiscal(data: any) {
   if (error) throw error;
 
   return { success: true };
-}
+},
   
   // Itens da Nota
   async getItensNota(notaId: number) {
