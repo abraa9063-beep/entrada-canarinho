@@ -146,47 +146,6 @@ export const api = {
   // Notas Fiscais
    // Notas Fiscais
   async getNotaFiscal(id: number) {
-  const { data, error } = await supabase
-    .from('notas_fiscais')
-    .select(`
-      *,
-      fornecedores (
-        id,
-        nome,
-        cnpj
-      )
-    `)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  const notas = (data || []).map((atual: any, index: number) => ({
-    id: index + 1,
-    numero: atual.numero_nf || '',
-    dataEmissao: atual.data_emissao || '',
-    dataEntrada: atual.data_emissao || '',
-    fornecedor: atual.fornecedores?.nome || 'Sem fornecedor',
-    cnpj: atual.fornecedores?.cnpj || '',
-    filial: 'Matriz',
-    responsavel: '',
-    chaveAcesso: '',
-    observacoes: '',
-    status: 'Lançada',
-    userId: atual.empresa_id,
-    createdAt: new Date(atual.created_at).getTime(),
-    itens: [],
-    valorTotal: Number(atual.valor_total || 0),
-    totalItens: 0,
-    supabaseId: atual.id,
-    fornecedorId: atual.fornecedor_id
-  }));
-
-  const nota = notas.find((n) => n.id === id);
-
-  return { data: nota || null };
-  },
-  
-  async getNotaFiscal(id: number) {
     const { data, error } = await supabase
       .from('notas_fiscais')
       .select(`
