@@ -229,7 +229,7 @@ export const api = {
     };
   },
   
- async createNotaFiscal(data: any) {
+async createNotaFiscal(data: any) {
   const empresaId = '560bf9db-5f5f-4f4e-bc64-c11f073ae78a';
 
   const { data: inserted, error } = await supabase
@@ -237,25 +237,41 @@ export const api = {
     .insert([
       {
         empresa_id: empresaId,
-        fornecedor_id: data.fornecedorId,
+        fornecedor_id: data.fornecedorId || null,
         numero_nf: data.numero,
         data_emissao: data.dataEmissao,
         valor_total: data.valorTotal || 0
       }
     ])
-    .select()
+    .select(`
+      *,
+      fornecedores (
+        id,
+        nome,
+        cnpj
+      )
+    `)
     .single();
 
   if (error) throw error;
 
+  const { data: todasNotas, error: listError } = await supabase
+    .from('notas_fiscais')
+    .select('id')
+    .order('created_at', { ascending: false });
+
+  if (listError) throw listError;
+
+  const index = (todasNotas || []).findIndex((n: any) => n.id === inserted.id);
+
   return {
     data: {
-      id: Date.now(),
+      id: index >= 0 ? index + 1 : Date.now(),
       numero: inserted.numero_nf,
       dataEmissao: inserted.data_emissao,
       dataEntrada: inserted.data_emissao,
-      fornecedor: '',
-      cnpj: '',
+      fornecedor: inserted.fornecedores?.nome || '',
+      cnpj: inserted.fornecedores?.cnpj || '',
       filial: 'Matriz',
       responsavel: '',
       chaveAcesso: '',
@@ -264,13 +280,13 @@ export const api = {
       userId: inserted.empresa_id,
       createdAt: new Date(inserted.created_at).getTime(),
       itens: [],
-      valorTotal: inserted.valor_total,
+      valorTotal: Number(inserted.valor_total || 0),
       totalItens: 0,
       supabaseId: inserted.id,
       fornecedorId: inserted.fornecedor_id
     }
   };
-},
+}
   
   async updateNotaFiscal(id: number, data: any) {
     const res = await client.api.fetch(`/api/notas-fiscais/${id}`, {
