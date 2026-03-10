@@ -145,6 +145,61 @@ export const api = {
   
   // Notas Fiscais
    // Notas Fiscais
+  async getNotasFiscais(filters?: { dataInicio?: string; dataFim?: string; fornecedor?: string }) {
+    let query = supabase
+      .from('notas_fiscais')
+      .select(`
+        *,
+        fornecedores (
+          id,
+          nome,
+          cnpj
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (filters?.dataInicio) {
+      query = query.gte('data_emissao', filters.dataInicio);
+    }
+
+    if (filters?.dataFim) {
+      query = query.lte('data_emissao', filters.dataFim);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    const notas = (data || []).map((n: any, index: number) => ({
+      id: index + 1,
+      numero: n.numero_nf || '',
+      dataEmissao: n.data_emissao || '',
+      dataEntrada: n.data_emissao || '',
+      fornecedor: n.fornecedores?.nome || 'Sem fornecedor',
+      cnpj: n.fornecedores?.cnpj || '',
+      filial: 'Matriz',
+      responsavel: '',
+      chaveAcesso: '',
+      observacoes: '',
+      status: 'Lançada',
+      userId: n.empresa_id,
+      createdAt: new Date(n.created_at).getTime(),
+      itens: [],
+      valorTotal: Number(n.valor_total || 0),
+      totalItens: 0,
+      supabaseId: n.id,
+      fornecedorId: n.fornecedor_id
+    }));
+
+    const notasFiltradas = filters?.fornecedor
+      ? notas.filter((n: any) =>
+          n.fornecedor.toLowerCase().includes(filters.fornecedor!.toLowerCase())
+        )
+      : notas;
+
+    return { data: notasFiltradas };
+  },
+
   async getNotaFiscal(id: number) {
     const { data, error } = await supabase
       .from('notas_fiscais')
@@ -160,31 +215,30 @@ export const api = {
 
     if (error) throw error;
 
-    const atual = (data || [])[id - 1];
-    if (!atual) return { data: null };
+    const notas = (data || []).map((atual: any, index: number) => ({
+      id: index + 1,
+      numero: atual.numero_nf || '',
+      dataEmissao: atual.data_emissao || '',
+      dataEntrada: atual.data_emissao || '',
+      fornecedor: atual.fornecedores?.nome || 'Sem fornecedor',
+      cnpj: atual.fornecedores?.cnpj || '',
+      filial: 'Matriz',
+      responsavel: '',
+      chaveAcesso: '',
+      observacoes: '',
+      status: 'Lançada',
+      userId: atual.empresa_id,
+      createdAt: new Date(atual.created_at).getTime(),
+      itens: [],
+      valorTotal: Number(atual.valor_total || 0),
+      totalItens: 0,
+      supabaseId: atual.id,
+      fornecedorId: atual.fornecedor_id
+    }));
 
-    return {
-      data: {
-        id,
-        numero: atual.numero_nf || '',
-        dataEmissao: atual.data_emissao || '',
-        dataEntrada: atual.data_emissao || '',
-        fornecedor: atual.fornecedores?.nome || 'Sem fornecedor',
-        cnpj: atual.fornecedores?.cnpj || '',
-        filial: 'Matriz',
-        responsavel: '',
-        chaveAcesso: '',
-        observacoes: '',
-        status: 'Lançada',
-        userId: atual.empresa_id,
-        createdAt: new Date(atual.created_at).getTime(),
-        itens: [],
-        valorTotal: Number(atual.valor_total || 0),
-        totalItens: 0,
-        supabaseId: atual.id,
-        fornecedorId: atual.fornecedor_id
-      }
-    };
+    const nota = notas.find((n) => n.id === id);
+
+    return { data: nota || null };
   },
   
 async createNotaFiscal(data: any) {
