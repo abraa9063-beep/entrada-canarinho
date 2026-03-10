@@ -315,34 +315,146 @@ async createNotaFiscal(data: any) {
 },
   
   // Itens da Nota
+   // Itens da Nota
   async getItensNota(notaId: number) {
-    const res = await client.api.fetch(`/api/notas-fiscais/${notaId}/itens`);
-    return res.json();
+    const { data: notas, error: notaError } = await supabase
+      .from('notas_fiscais')
+      .select('id')
+      .order('created_at', { ascending: false });
+
+    if (notaError) throw notaError;
+
+    const notaAtual = (notas || [])[notaId - 1];
+    if (!notaAtual) return { data: [] };
+
+    const { data, error } = await supabase
+      .from('itens_nf')
+      .select('*')
+      .eq('nf_id', notaAtual.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return {
+      data: (data || []).map((item: any, index: number) => ({
+        id: index + 1,
+        notaFiscalId: notaId,
+        descricao: item.descricao || '',
+        categoria: '',
+        quantidade: Number(item.quantidade || 0),
+        unidade: 'UN',
+        precoUnitario: Number(item.valor_unitario || 0),
+        desconto: 0,
+        userId: '',
+        createdAt: new Date(item.created_at).getTime(),
+        supabaseId: item.id
+      })),
+    };
   },
-  
+
   async createItemNota(notaId: number, data: any) {
-    const res = await client.api.fetch(`/api/notas-fiscais/${notaId}/itens`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    const { data: notas, error: notaError } = await supabase
+      .from('notas_fiscais')
+      .select('id')
+      .order('created_at', { ascending: false });
+
+    if (notaError) throw notaError;
+
+    const notaAtual = (notas || [])[notaId - 1];
+    if (!notaAtual) throw new Error('Nota fiscal não encontrada no Supabase.');
+
+    const { data: inserted, error } = await supabase
+      .from('itens_nf')
+      .insert([
+        {
+          nf_id: notaAtual.id,
+          descricao: data.descricao,
+          quantidade: data.quantidade || 1,
+          valor_unitario: data.precoUnitario || 0
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      data: {
+        id: Date.now(),
+        notaFiscalId: notaId,
+        descricao: inserted.descricao || '',
+        categoria: '',
+        quantidade: Number(inserted.quantidade || 0),
+        unidade: 'UN',
+        precoUnitario: Number(inserted.valor_unitario || 0),
+        desconto: 0,
+        userId: '',
+        createdAt: new Date(inserted.created_at).getTime(),
+        supabaseId: inserted.id
+      }
+    };
   },
-  
+
   async updateItemNota(id: number, data: any) {
-    const res = await client.api.fetch(`/api/itens-nf/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    const { data: itens, error: listError } = await supabase
+      .from('itens_nf')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (listError) throw listError;
+
+    const atual = (itens || [])[id - 1];
+    if (!atual) throw new Error('Item não encontrado no Supabase.');
+
+    const { data: updated, error } = await supabase
+      .from('itens_nf')
+      .update({
+        descricao: data.descricao ?? atual.descricao,
+        quantidade: data.quantidade ?? atual.quantidade,
+        valor_unitario: data.precoUnitario ?? atual.valor_unitario
+      })
+      .eq('id', atual.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      data: {
+        id,
+        notaFiscalId: 0,
+        descricao: updated.descricao || '',
+        categoria: '',
+        quantidade: Number(updated.quantidade || 0),
+        unidade: 'UN',
+        precoUnitario: Number(updated.valor_unitario || 0),
+        desconto: 0,
+        userId: '',
+        createdAt: new Date(updated.created_at).getTime(),
+        supabaseId: updated.id
+      }
+    };
   },
-  
+
   async deleteItemNota(id: number) {
-    const res = await client.api.fetch(`/api/itens-nf/${id}`, {
-      method: "DELETE",
-    });
-    return res.json();
+    const { data: itens, error: listError } = await supabase
+      .from('itens_nf')
+      .select('id')
+      .order('created_at', { ascending: false });
+
+    if (listError) throw listError;
+
+    const atual = (itens || [])[id - 1];
+    if (!atual) throw new Error('Item não encontrado no Supabase.');
+
+    const { error } = await supabase
+      .from('itens_nf')
+      .delete()
+      .eq('id', atual.id);
+
+    if (error) throw error;
+
+    return { success: true };
   },
   
   // Catálogo
