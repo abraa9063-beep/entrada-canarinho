@@ -127,22 +127,6 @@ export const api = {
     return { success: true };
   },
   
-  async updateFornecedor(id: number, data: any) {
-    const res = await client.api.fetch(`/api/fornecedores/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return res.json();
-  },
-  
-  async deleteFornecedor(id: number) {
-    const res = await client.api.fetch(`/api/fornecedores/${id}`, {
-      method: "DELETE",
-    });
-    return res.json();
-  },
-  
   // Notas Fiscais
    // Notas Fiscais
   async getNotasFiscais(filters?: { dataInicio?: string; dataFim?: string; fornecedor?: string }) {
