@@ -242,14 +242,48 @@ export const api = {
     };
   },
   
-  async createNotaFiscal(data: any) {
-    const res = await client.api.fetch("/api/notas-fiscais", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return res.json();
-  },
+ async createNotaFiscal(data: any) {
+  const empresaId = '560bf9db-5f5f-4f4e-bc64-c11f073ae78a';
+
+  const { data: inserted, error } = await supabase
+    .from('notas_fiscais')
+    .insert([
+      {
+        empresa_id: empresaId,
+        fornecedor_id: data.fornecedorId,
+        numero_nf: data.numero,
+        data_emissao: data.dataEmissao,
+        valor_total: data.valorTotal || 0
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    data: {
+      id: Date.now(),
+      numero: inserted.numero_nf,
+      dataEmissao: inserted.data_emissao,
+      dataEntrada: inserted.data_emissao,
+      fornecedor: '',
+      cnpj: '',
+      filial: 'Matriz',
+      responsavel: '',
+      chaveAcesso: '',
+      observacoes: '',
+      status: 'Lançada',
+      userId: inserted.empresa_id,
+      createdAt: new Date(inserted.created_at).getTime(),
+      itens: [],
+      valorTotal: inserted.valor_total,
+      totalItens: 0,
+      supabaseId: inserted.id,
+      fornecedorId: inserted.fornecedor_id
+    }
+  };
+},
   
   async updateNotaFiscal(id: number, data: any) {
     const res = await client.api.fetch(`/api/notas-fiscais/${id}`, {
