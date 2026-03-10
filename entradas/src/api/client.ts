@@ -353,47 +353,60 @@ async createNotaFiscal(data: any) {
   },
 
   async createItemNota(notaId: number, data: any) {
-    const { data: notas, error: notaError } = await supabase
-      .from('notas_fiscais')
-      .select('id')
-      .order('created_at', { ascending: false });
+  console.log('createItemNota - notaId recebido:', notaId);
+  console.log('createItemNota - data recebida:', data);
 
-    if (notaError) throw notaError;
+  const { data: notas, error: notaError } = await supabase
+    .from('notas_fiscais')
+    .select('id')
+    .order('created_at', { ascending: false });
 
-    const notaAtual = (notas || [])[notaId - 1];
-    if (!notaAtual) throw new Error('Nota fiscal não encontrada no Supabase.');
+  console.log('createItemNota - notas do supabase:', notas);
+  console.log('createItemNota - notaError:', notaError);
 
-    const { data: inserted, error } = await supabase
-      .from('itens_nf')
-      .insert([
-        {
-          nf_id: notaAtual.id,
-          descricao: data.descricao,
-          quantidade: data.quantidade || 1,
-          valor_unitario: data.precoUnitario || 0
-        }
-      ])
-      .select()
-      .single();
+  if (notaError) throw notaError;
 
-    if (error) throw error;
+  const notaAtual = (notas || [])[notaId - 1];
+  console.log('createItemNota - notaAtual escolhida:', notaAtual);
 
-    return {
-      data: {
-        id: Date.now(),
-        notaFiscalId: notaId,
-        descricao: inserted.descricao || '',
-        categoria: '',
-        quantidade: Number(inserted.quantidade || 0),
-        unidade: 'UN',
-        precoUnitario: Number(inserted.valor_unitario || 0),
-        desconto: 0,
-        userId: '',
-        createdAt: new Date(inserted.created_at).getTime(),
-        supabaseId: inserted.id
-      }
-    };
-  },
+  if (!notaAtual) throw new Error('Nota fiscal não encontrada no Supabase.');
+
+  const payload = {
+    nf_id: notaAtual.id,
+    descricao: data.descricao,
+    quantidade: data.quantidade || 1,
+    valor_unitario: data.precoUnitario || 0
+  };
+
+  console.log('createItemNota - payload insert:', payload);
+
+  const { data: inserted, error } = await supabase
+    .from('itens_nf')
+    .insert([payload])
+    .select()
+    .single();
+
+  console.log('createItemNota - inserted:', inserted);
+  console.log('createItemNota - error:', error);
+
+  if (error) throw error;
+
+  return {
+    data: {
+      id: Date.now(),
+      notaFiscalId: notaId,
+      descricao: inserted.descricao || '',
+      categoria: '',
+      quantidade: Number(inserted.quantidade || 0),
+      unidade: 'UN',
+      precoUnitario: Number(inserted.valor_unitario || 0),
+      desconto: 0,
+      userId: '',
+      createdAt: new Date(inserted.created_at).getTime(),
+      supabaseId: inserted.id
+    }
+  };
+}
 
   async updateItemNota(id: number, data: any) {
     const { data: itens, error: listError } = await supabase
